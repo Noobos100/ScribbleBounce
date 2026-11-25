@@ -15,4 +15,5 @@ export class Player
 
         void update(float deltaTime);
         void draw(sf::RenderWindow& window) const;
+        sf::Vector2f GetPosition() const;
 };

@@ -59,3 +59,8 @@ void Player::draw(sf::RenderWindow& window) const
 {
     window.draw(shape);
 }
+
+sf::Vector2f Player::GetPosition() const
+{
+    return shape.getPosition();
+}
