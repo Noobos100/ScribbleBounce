@@ -75,7 +75,7 @@ if(NOT EXISTS ${STD_BASE_DIR}/std.${STD_EXTENSION})
 endif()
 
 if(CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
-	add_compile_options(-stdlib=libc++)
+	add_compile_options($<$<COMPILE_LANGUAGE:CXX>:-stdlib=libc++>)
 	add_link_options(-stdlib=libc++)
     if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
         add_link_options(-static-libstdc++)

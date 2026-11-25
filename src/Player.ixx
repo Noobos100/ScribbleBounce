@@ -7,10 +7,11 @@ export class Player
     sf::RectangleShape shape;
     float speed;
     float windowWidth;
-    float windowHeight;
+    float groundLevel;
+    float verticalVelocity;
 
     public:
-        Player(float windowWidth, float windowHeight);
+        Player(float windowWidth, float groundLevel);
 
         void update(float deltaTime);
         void draw(sf::RenderWindow& window) const;

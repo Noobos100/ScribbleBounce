@@ -4,17 +4,24 @@ module;
 
 module Player;
 
-Player::Player(const float windowWidth, const float windowHeight)
+namespace
+{
+    constexpr float gravity = 1800.f;
+    constexpr float jumpSpeed = 700.f;
+}
+
+Player::Player(const float windowWidth, const float groundLevel)
     : speed(300.f),
       windowWidth(windowWidth),
-      windowHeight(windowHeight)
+      groundLevel(groundLevel),
+      verticalVelocity(-jumpSpeed)
 {
     shape.setSize({40.f, 50.f});
     shape.setFillColor(sf::Color::Green);
 
     shape.setPosition({
         windowWidth / 2.f - 20.f,
-        windowHeight - 100.f
+        groundLevel - shape.getSize().y
     });
 }
 
@@ -28,7 +35,8 @@ void Player::update(const float deltaTime)
     if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::Right))
         movement += speed;
 
-    shape.move({movement * deltaTime, 0.f});
+    verticalVelocity += gravity * deltaTime;
+    shape.move({movement * deltaTime, verticalVelocity * deltaTime});
 
     auto position = shape.getPosition();
 
@@ -37,6 +45,12 @@ void Player::update(const float deltaTime)
 
     if (position.x + shape.getSize().x > windowWidth)
         position.x = windowWidth - shape.getSize().x;
+
+    if (position.y + shape.getSize().y >= groundLevel && verticalVelocity > 0.f)
+    {
+        position.y = groundLevel - shape.getSize().y;
+        verticalVelocity = -jumpSpeed;
+    }
 
     shape.setPosition(position);
 }
