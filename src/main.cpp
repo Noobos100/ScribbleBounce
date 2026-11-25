@@ -1,21 +1,24 @@
 
 #include <SFML/Graphics.hpp>
-#include <optional>
+import std;
+import Player;
 
 int main()
 {
     // Création et gestion de la fenêtre
+    constexpr unsigned int width = 800;
+    constexpr unsigned int height = 600;
+
     sf::RenderWindow window(
-        sf::VideoMode({800, 600}),
+        sf::VideoMode({width, height}),
         "ScribbleBounce"
     );
 
     window.setFramerateLimit(60);
 
-    // Joueur provisoire
-    sf::RectangleShape player({40.f, 50.f});
-    player.setFillColor(sf::Color::Green);
-    player.setPosition({380.f, 500.f});
+    // Joueur
+    Player player(width, height);
+    sf::Clock clock;
 
     while (window.isOpen())
     {
@@ -26,18 +29,13 @@ int main()
                 window.close();
         }
 
-        // Déplacements
-        if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::Left))
-            player.move({-5.f, 0.f});
+        const float deltaTime = clock.restart().asSeconds();
 
-        if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::Right))
-            player.move({5.f, 0.f});
+        player.update(deltaTime);
 
         // Affichage
         window.clear(sf::Color(135, 206, 235));
-
-        window.draw(player);
-
+        player.draw(window);
         window.display();
     }
 
