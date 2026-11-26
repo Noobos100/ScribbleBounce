@@ -6,10 +6,17 @@ module Player;
 
 namespace
 {
+    // Accélération verticale vers le bas, en unités du monde par seconde carrée.
     constexpr float gravity = 1800.f;
-    constexpr float jumpSpeed = 700.f;
+    // Vitesse verticale initiale vers le haut lors d'un rebond, en unités par seconde.
+    constexpr float jumpSpeed = 800.f;
 }
 
+/**
+ * @param windowWidth Largeur de la fenêtre en unités du monde, utilisée pour limiter
+ *                    le déplacement horizontal.
+ * @param startPlatformTop Coordonnée verticale du haut de la plateforme de départ.
+ */
 Player::Player(const float windowWidth, const float startPlatformTop)
     : speed(300.f),
       windowWidth(windowWidth),
@@ -24,10 +31,14 @@ Player::Player(const float windowWidth, const float startPlatformTop)
     });
 }
 
+/**
+ * @param deltaTime Temps écoulé depuis la mise à jour précédente, en secondes.
+ */
 void Player::update(const float deltaTime)
 {
     float movement = 0.f;
 
+    // déplacements au clavier
     if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::Left))
         movement -= speed;
 
@@ -48,6 +59,9 @@ void Player::update(const float deltaTime)
     shape.setPosition(position);
 }
 
+/**
+ * @param window Fenêtre SFML dans laquelle dessiner le joueur.
+ */
 void Player::draw(sf::RenderWindow& window) const
 {
     window.draw(shape);
@@ -68,6 +82,10 @@ bool Player::IsFalling() const
     return verticalVelocity > 0.f;
 }
 
+/**
+ * @param platformTop Coordonnée verticale du haut de la plateforme sur laquelle le joueur
+ *                    vient d'atterrir.
+ */
 void Player::LandOn(const float platformTop)
 {
     auto position = shape.getPosition();

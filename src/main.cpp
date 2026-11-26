@@ -15,7 +15,7 @@ int main()
     );
 
     window.setFramerateLimit(60);
-    Game game(static_cast<float>(width));
+    Game game(static_cast<float>(width), static_cast<float>(height));
 
     sf::Clock clock;
 
