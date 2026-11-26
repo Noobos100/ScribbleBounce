@@ -10,18 +10,17 @@ namespace
     constexpr float jumpSpeed = 700.f;
 }
 
-Player::Player(const float windowWidth, const float groundLevel)
+Player::Player(const float windowWidth, const float startPlatformTop)
     : speed(300.f),
       windowWidth(windowWidth),
-      groundLevel(groundLevel),
-      verticalVelocity(-jumpSpeed)
+      verticalVelocity(0.f)
 {
     shape.setSize({40.f, 50.f});
     shape.setFillColor(sf::Color::Green);
 
     shape.setPosition({
         windowWidth / 2.f - 20.f,
-        groundLevel - shape.getSize().y
+        startPlatformTop - shape.getSize().y
     });
 }
 
@@ -46,12 +45,6 @@ void Player::update(const float deltaTime)
     if (position.x + shape.getSize().x > windowWidth)
         position.x = windowWidth - shape.getSize().x;
 
-    if (position.y + shape.getSize().y >= groundLevel && verticalVelocity > 0.f)
-    {
-        position.y = groundLevel - shape.getSize().y;
-        verticalVelocity = -jumpSpeed;
-    }
-
     shape.setPosition(position);
 }
 
@@ -63,4 +56,22 @@ void Player::draw(sf::RenderWindow& window) const
 sf::Vector2f Player::GetPosition() const
 {
     return shape.getPosition();
+}
+
+sf::FloatRect Player::GetBounds() const
+{
+    return shape.getGlobalBounds();
+}
+
+bool Player::IsFalling() const
+{
+    return verticalVelocity > 0.f;
+}
+
+void Player::LandOn(const float platformTop)
+{
+    auto position = shape.getPosition();
+    position.y = platformTop - shape.getSize().y;
+    shape.setPosition(position);
+    verticalVelocity = -jumpSpeed;
 }

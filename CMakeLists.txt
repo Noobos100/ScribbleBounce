@@ -28,10 +28,10 @@ set(TESTS_DIR ${CMAKE_CURRENT_SOURCE_DIR}/tests)
 
 # Découvrir les sources et relancer CMake lors de leur ajout ou suppression
 # Note : en cas d'ajout de sous répertoire, mettre ci-dessous
-file(GLOB SRC_FILES CONFIGURE_DEPENDS
+file(GLOB_RECURSE SRC_FILES CONFIGURE_DEPENDS
         "${SRC_DIR}/*.cpp"
 )
-file(GLOB MODULE_FILES CONFIGURE_DEPENDS
+file(GLOB_RECURSE MODULE_FILES CONFIGURE_DEPENDS
         "${SRC_DIR}/*.ixx"
 )
 file(GLOB TEST_FILES CONFIGURE_DEPENDS
