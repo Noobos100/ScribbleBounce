@@ -10,13 +10,20 @@ module Game;
  */
 Game::Game(const float windowWidth, const float windowHeight)
 :
-      platforms{{windowWidth / 2.f - 75.f, 540.f, 150.f, 16.f}},
+      platforms{{windowWidth / 2.f - 60.f, 540.f, 120.f, 16.f}},
       player(windowWidth, 540.f),
+      heightText(heightFont),
+      initialPlayerY(player.GetBounds().position.y),
       windowWidth(windowWidth),
       windowHeight(windowHeight),
-      generationAnchorX(windowWidth / 2.f - 75.f),
+      generationAnchorX(windowWidth / 2.f - 60.f),
       randomEngine(std::random_device{}())
 {
+    if (!heightFont.openFromFile("C:/Windows/Fonts/arial.ttf"))
+        throw std::runtime_error("Unable to load the Windows Arial font.");
+
+    heightText.setCharacterSize(24);
+    heightText.setFillColor(sf::Color::Black);
     GeneratePlatforms();
 }
 
@@ -35,21 +42,51 @@ void Game::GeneratePlatforms()
         // Réduit graduellement la largeur des plateformes à mesure que la caméra monte.
         const float platformWidth = std::min(
             windowWidth,
-            std::max(100.f, 150.f - cameraOffset * 0.025f)
+            std::max(70.f, 95.f - cameraOffset * 0.015f)
         );
         // Choisit un écart vertical aléatoire pour la prochaine rangée.
         std::uniform_real_distribution gapDistribution(100.f, 130.f);
         const float platformGap = gapDistribution(randomEngine);
         const float platformY = generationAnchorY - platformGap;
 
-        // Place une plateforme de passage à portée de saut de la rangée précédente.
+        // Impose un décalage horizontal pour éviter une progression en restant immobile.
         const float maxX = std::max(0.f, windowWidth - platformWidth);
-        const float minReachableX = std::max(0.f, generationAnchorX - 120.f);
-        const float maxReachableX = std::min(maxX, generationAnchorX + 120.f);
-        std::uniform_real_distribution pathXDistribution(
-            minReachableX,
-            std::max(minReachableX, maxReachableX));
-        const float pathPlatformX = pathXDistribution(randomEngine);
+        constexpr float maximumHorizontalOffset = 220.f;
+        constexpr float clearanceForStandingPlayer = 60.f;
+        std::vector<std::pair<float, float>> reachableRanges;
+
+        const float rightMinX = std::max(
+            0.f,
+            generationAnchorX + generationAnchorWidth + clearanceForStandingPlayer);
+        const float rightMaxX = std::min(maxX, generationAnchorX + maximumHorizontalOffset);
+        if (rightMinX <= rightMaxX)
+            reachableRanges.emplace_back(rightMinX, rightMaxX);
+
+        const float leftMinX = std::max(0.f, generationAnchorX - maximumHorizontalOffset);
+        const float leftMaxX = std::min(
+            maxX,
+            generationAnchorX - platformWidth - clearanceForStandingPlayer);
+        if (leftMinX <= leftMaxX)
+            reachableRanges.emplace_back(leftMinX, leftMaxX);
+
+        float pathPlatformX{};
+        if (!reachableRanges.empty())
+        {
+            std::uniform_int_distribution<std::size_t> rangeDistribution(
+                0,
+                reachableRanges.size() - 1);
+            const auto [minimumX, maximumX] = reachableRanges[rangeDistribution(randomEngine)];
+            std::uniform_real_distribution xDistribution(minimumX, maximumX);
+            pathPlatformX = xDistribution(randomEngine);
+        }
+        else
+        {
+            // Sur une fenêtre trop étroite, utilise la position accessible la plus éloignée.
+            pathPlatformX = std::clamp(
+                generationAnchorX + (generationAnchorX < maxX / 2.f ? 1.f : -1.f) * maximumHorizontalOffset,
+                0.f,
+                maxX);
+        }
 
         platforms.emplace_back(
             pathPlatformX,
@@ -59,6 +96,7 @@ void Game::GeneratePlatforms()
 
         // Garde cette plateforme comme point de départ pour la prochaine rangée.
         generationAnchorX = pathPlatformX;
+        generationAnchorWidth = platformWidth;
         generationAnchorY = platformY;
 
         // Ajoute une plateforme facultative à la même hauteur.
@@ -69,24 +107,29 @@ void Game::GeneratePlatforms()
 
         for (std::size_t index = 0; index < extraPlatformCount; ++index)
         {
-            // Essaie plusieurs positions pour éviter que les plateformes se chevauchent.
-            float extraPlatformX = extraXDistribution(randomEngine);
-            for (int attempt = 0; attempt < 20; ++attempt)
+            // Cherche une position laissant au moins 50 unités entre les plateformes de la rangée.
+            std::optional<float> extraPlatformX;
+            for (int attempt = 0; attempt < 64; ++attempt)
             {
-                extraPlatformX = extraXDistribution(randomEngine);
+                const float candidateX = extraXDistribution(randomEngine);
                 const bool hasSpace = std::ranges::all_of(
                     rowPlatformXs,
-                    [extraPlatformX, platformWidth](const float existingX)
+                    [candidateX, platformWidth](const float existingX)
                     {
-                        return std::abs(extraPlatformX - existingX) >= platformWidth + 12.f;
+                        return std::abs(candidateX - existingX) >= platformWidth + 50.f;
                     });
                 if (hasSpace)
+                {
+                    extraPlatformX = candidateX;
                     break;
+                }
             }
 
-            // Ajoute la plateforme à la rangée et mémorise sa position horizontale.
-            platforms.emplace_back(extraPlatformX, platformY, platformWidth, 16.f);
-            rowPlatformXs.push_back(extraPlatformX);
+            if (extraPlatformX)
+            {
+                platforms.emplace_back(*extraPlatformX, platformY, platformWidth, 16.f);
+                rowPlatformXs.push_back(*extraPlatformX);
+            }
         }
     }
 }
@@ -148,6 +191,11 @@ void Game::Update(const float deltaTime)
     if (const float desiredOffset = windowHeight * 0.35f - player.GetBounds().position.y; desiredOffset > cameraOffset)
         cameraOffset = desiredOffset;
 
+    maximumHeight = std::max(
+        maximumHeight,
+        initialPlayerY - player.GetBounds().position.y
+    );
+
     GeneratePlatforms();
     RemovePlatformsBelowCamera();
 }
@@ -169,6 +217,19 @@ void Game::Draw(sf::RenderWindow& window) const
     for (const auto& platform : platforms)
         platform.draw(window);
     player.draw(window);
+
+    window.setView(window.getDefaultView());
+    auto scoreText = heightText;
+    scoreText.setString(
+        "Score : " + std::to_string(static_cast<int>(maximumHeight))
+    );
+    const auto textBounds = scoreText.getLocalBounds();
+    const auto windowSize = window.getSize();
+    scoreText.setPosition({
+        static_cast<float>(windowSize.x) - textBounds.position.x - textBounds.size.x - 16.f,
+        16.f - textBounds.position.y
+    });
+    window.draw(scoreText);
 
     window.setView(originalView);
 }

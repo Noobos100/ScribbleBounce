@@ -9,7 +9,7 @@ namespace
     // Accélération verticale vers le bas, en unités du monde par seconde carrée.
     constexpr float gravity = 1800.f;
     // Vitesse verticale initiale vers le haut lors d'un rebond, en unités par seconde.
-    constexpr float jumpSpeed = 800.f;
+    constexpr float jumpSpeed = 900.f;
 }
 
 /**
