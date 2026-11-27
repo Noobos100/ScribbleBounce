@@ -31,7 +31,7 @@ void Game::ResetGame()
     maximumHeight = 0.f;
     cameraOffset = 0.f;
     isGameOver = false;
-    levelGenerator.Generate(cameraOffset);
+    levelGenerator.Generate(cameraOffset, maximumHeight);
 }
 
 /**
@@ -96,7 +96,7 @@ void Game::Update(const float deltaTime)
         return;
     }
 
-    levelGenerator.Generate(cameraOffset);
+    levelGenerator.Generate(cameraOffset, maximumHeight);
     levelGenerator.RemoveBelowCamera(cameraOffset);
 }
 

@@ -16,6 +16,7 @@ public:
 
     void Clear(Color color) override;
     void DrawRectangle(Rectangle rectangle, Color color) override;
+    void DrawCircle(Vector2 center, float radius, Color color) override;
     void DrawText(
         std::string_view text,
         Vector2 position,

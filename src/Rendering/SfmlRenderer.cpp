@@ -27,6 +27,21 @@ void SfmlRenderer::DrawRectangle(const Rectangle rectangle, const Color color)
     window.draw(shape);
 }
 
+void SfmlRenderer::DrawCircle(
+    const Vector2 center,
+    const float radius,
+    const Color color)
+{
+    sf::CircleShape shape(radius);
+    shape.setOrigin({radius, radius});
+    shape.setPosition({
+        center.x,
+        center.y + worldCameraOffset
+    });
+    shape.setFillColor({color.red, color.green, color.blue, color.alpha});
+    window.draw(shape);
+}
+
 void SfmlRenderer::DrawText(
     const std::string_view value,
     const Vector2 position,

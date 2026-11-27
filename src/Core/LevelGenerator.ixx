@@ -24,7 +24,7 @@ public:
     void Reset();
 
     /// Generates reachable platform rows above the camera's generation limit.
-    void Generate(float cameraOffset);
+    void Generate(float cameraOffset, float currentHeight);
 
     /// Enables horizontal movement for a subset of optional platforms.
     void EnableMovingPlatforms();

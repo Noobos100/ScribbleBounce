@@ -42,7 +42,7 @@ void LevelGenerator::StartMovingPlatform(Platform& platform)
     platform.StartHorizontalMovement(minimumX, maximumX, direction * movementSpeed);
 }
 
-void LevelGenerator::Generate(const float cameraOffset)
+void LevelGenerator::Generate(const float cameraOffset, const float currentHeight)
 {
     const float generationLimit = windowHeight * 0.35f - cameraOffset - 120.f;
     std::bernoulli_distribution shouldMove(0.5);
@@ -135,6 +135,21 @@ void LevelGenerator::Generate(const float cameraOffset)
                 if (movingPlatformsEnabled && shouldMove(randomEngine))
                     StartMovingPlatform(platforms.back());
                 rowPlatformXs.push_back(*extraPlatformX);
+
+                // à partir d'une certaine hauteur, 1 chance sur 10 (0,1) que des portes
+                // vers des niveaux bonus peuvent apparaître sur les plateformes secondaires
+                if (currentHeight > 5000.f)
+                {
+                    std::bernoulli_distribution shouldSpawnDoor(0.1);
+                    if (shouldSpawnDoor(randomEngine))
+                    {
+                        std::uniform_int_distribution platformDistribution(
+                            platforms.size() - 2,
+                            platforms.size() - 1
+                        );
+                        platforms[platformDistribution(randomEngine)].AddDoor();
+                    }
+                }
             }
         }
     }

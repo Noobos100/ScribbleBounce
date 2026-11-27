@@ -38,6 +38,8 @@ public:
     virtual void Clear(Color color) = 0;
     /// Draws a world-space rectangle with the currently configured camera offset.
     virtual void DrawRectangle(Rectangle rectangle, Color color) = 0;
+    /// Draws a world-space circle with the currently configured camera offset.
+    virtual void DrawCircle(Vector2 center, float radius, Color color) = 0;
     /// Draws text at a screen-space top-left position.
     virtual void DrawText(
         std::string_view text,

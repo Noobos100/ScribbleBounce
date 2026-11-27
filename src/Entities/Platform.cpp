@@ -2,6 +2,7 @@ module;
 module Platform;
 
 import std;
+import Door;
 
 Platform::Platform(
     const float x,
@@ -17,6 +18,8 @@ Platform::Platform(
 void Platform::Draw(Renderer& renderer) const
 {
     renderer.DrawRectangle(bounds, {80, 160, 80});
+    if (door)
+        door->Draw(renderer);
 }
 
 Rectangle Platform::GetBounds() const
@@ -27,6 +30,17 @@ Rectangle Platform::GetBounds() const
 bool Platform::IsHorizontalMovementEligible() const
 {
     return horizontalMovementEligible;
+}
+
+void Platform::AddDoor()
+{
+    constexpr float doorRadius = 12.f;
+    door.emplace(
+        Vector2{
+            .x = bounds.position.x + bounds.size.x / 2.f,
+            .y = bounds.position.y - doorRadius
+        },
+        doorRadius);
 }
 
 void Platform::StartHorizontalMovement(
@@ -47,6 +61,7 @@ void Platform::Update(const float deltaTime)
     if (horizontalVelocity == 0.f)
         return;
 
+    const float previousX = bounds.position.x;
     bounds.position.x += horizontalVelocity * deltaTime;
     while (bounds.position.x < minimumX || bounds.position.x > maximumX)
     {
@@ -61,4 +76,7 @@ void Platform::Update(const float deltaTime)
             horizontalVelocity = -std::abs(horizontalVelocity);
         }
     }
+
+    if (door)
+        door->MoveHorizontally(bounds.position.x - previousX);
 }

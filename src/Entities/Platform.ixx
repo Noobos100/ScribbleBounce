@@ -1,12 +1,15 @@
 module;
 export module Platform;
 
+import std;
 import Renderer;
+import Door;
 
 export class Platform
 {
     Rectangle bounds;
     bool horizontalMovementEligible;
+    std::optional<Door> door;
     float horizontalVelocity{};
     float minimumX{};
     float maximumX{};
@@ -17,6 +20,7 @@ public:
     void Draw(Renderer& renderer) const;
     Rectangle GetBounds() const;
     bool IsHorizontalMovementEligible() const;
+    void AddDoor();
     void StartHorizontalMovement(float minimumX, float maximumX, float speed);
     void Update(float deltaTime);
 };
