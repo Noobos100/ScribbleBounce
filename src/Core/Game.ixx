@@ -18,6 +18,8 @@ export class Game
     float initialPlayerY;
     /// Greatest upward distance reached from the starting position, in world units.
     float maximumHeight{};
+    /// True after the player falls below the visible world area.
+    bool isGameOver{};
     /// Window width in world units, used to keep generated platforms on screen.
     float windowWidth;
     /// Window height in SFML world-coordinate units, used to place the camera threshold.
@@ -35,6 +37,8 @@ export class Game
     void GeneratePlatforms();
     /// Removes platforms that have passed below the camera's visible area.
     void RemovePlatformsBelowCamera();
+    /// Restores the initial player, platform, camera, and score state.
+    void ResetGame();
 
 public:
     /**
@@ -51,11 +55,14 @@ public:
      */
     Game(float windowWidth, float windowHeight);
 
-    /// Updates the player, platform collisions, and upward-only camera tracking.
+    /// Updates gameplay until the player falls below the visible area.
     /// @param deltaTime Elapsed time in seconds since the previous update.
     void Update(float deltaTime);
 
-    /// Draws the platforms and player through the camera view, with a fixed height-score HUD.
+    /// Restarts the game if it has ended.
+    void Restart();
+
+    /// Draws the game through the camera view, with the score HUD and game-over display.
     /// @param window Render window whose view is temporarily adjusted for drawing.
     void Draw(sf::RenderWindow& window) const;
 };

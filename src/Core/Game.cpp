@@ -24,6 +24,29 @@ Game::Game(const float windowWidth, const float windowHeight)
 
     heightText.setCharacterSize(24);
     heightText.setFillColor(sf::Color::Black);
+    ResetGame();
+}
+
+/**
+ * @copydoc Game::ResetGame()
+ */
+void Game::ResetGame()
+{
+    constexpr float startPlatformTop = 540.f;
+    constexpr float startPlatformWidth = 120.f;
+    const float startPlatformX = windowWidth / 2.f - startPlatformWidth / 2.f;
+
+    platforms.clear();
+    platforms.emplace_back(startPlatformX, startPlatformTop, startPlatformWidth, 16.f);
+    player = Player(windowWidth, startPlatformTop);
+    initialPlayerY = player.GetBounds().position.y;
+    maximumHeight = 0.f;
+    cameraOffset = 0.f;
+    generationAnchorX = startPlatformX;
+    generationAnchorWidth = startPlatformWidth;
+    generationAnchorY = startPlatformTop;
+    isGameOver = false;
+
     GeneratePlatforms();
 }
 
@@ -45,7 +68,7 @@ void Game::GeneratePlatforms()
             std::max(70.f, 95.f - cameraOffset * 0.015f)
         );
         // Choisit un écart vertical aléatoire pour la prochaine rangée.
-        std::uniform_real_distribution gapDistribution(100.f, 130.f);
+        std::uniform_real_distribution gapDistribution(100.f, 150.f);
         const float platformGap = gapDistribution(randomEngine);
         const float platformY = generationAnchorY - platformGap;
 
@@ -136,6 +159,7 @@ void Game::GeneratePlatforms()
 
 /**
  * Removes platforms once their top edge is below the camera's lower visible boundary.
+ * Not sure if this is a great idea, maybe refactor
  */
 void Game::RemovePlatformsBelowCamera()
 {
@@ -158,6 +182,9 @@ void Game::RemovePlatformsBelowCamera()
  */
 void Game::Update(const float deltaTime)
 {
+    if (isGameOver)
+        return;
+
     const auto previousBounds = player.GetBounds();
     player.update(deltaTime);
     const auto currentBounds = player.GetBounds();
@@ -196,8 +223,23 @@ void Game::Update(const float deltaTime)
         initialPlayerY - player.GetBounds().position.y
     );
 
+    if (player.GetBounds().position.y > windowHeight - cameraOffset)
+    {
+        isGameOver = true;
+        return;
+    }
+
     GeneratePlatforms();
     RemovePlatformsBelowCamera();
+}
+
+/**
+ * @copydoc Game::Restart()
+ */
+void Game::Restart()
+{
+    if (isGameOver)
+        ResetGame();
 }
 
 /**
@@ -230,6 +272,23 @@ void Game::Draw(sf::RenderWindow& window) const
         16.f - textBounds.position.y
     });
     window.draw(scoreText);
+
+    if (isGameOver)
+    {
+        auto gameOverText = sf::Text(
+            heightFont,
+            "Game Over\nFinal Score: " +
+                std::to_string(static_cast<int>(maximumHeight)) +
+                "\nPress R to Restart");
+        gameOverText.setCharacterSize(32);
+        gameOverText.setFillColor(sf::Color::Black);
+        const auto bounds = gameOverText.getLocalBounds();
+        gameOverText.setPosition({
+            (static_cast<float>(windowSize.x) - bounds.size.x) / 2.f - bounds.position.x,
+            (static_cast<float>(windowSize.y) - bounds.size.y) / 2.f - bounds.position.y
+        });
+        window.draw(gameOverText);
+    }
 
     window.setView(originalView);
 }

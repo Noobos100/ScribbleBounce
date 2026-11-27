@@ -1,5 +1,6 @@
 
 #include <SFML/Graphics.hpp>
+#include <SFML/Window/Keyboard.hpp>
 import std;
 import Game;
 
@@ -26,6 +27,10 @@ int main()
         {
             if (event->is<sf::Event::Closed>())
                 window.close();
+
+            if (const auto* keyPressed = event->getIf<sf::Event::KeyPressed>();
+                keyPressed && keyPressed->code == sf::Keyboard::Key::R)
+                game.Restart();
         }
 
         const float deltaTime = clock.restart().asSeconds();
