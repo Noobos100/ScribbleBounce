@@ -5,11 +5,12 @@ import std;
 import Renderer;
 import Platform;
 import Player;
+import LevelGenerator;
 
 /// Coordinates gameplay, platform collisions, and the upward-following camera.
 export class Game
 {
-    std::vector<Platform> platforms;
+    LevelGenerator levelGenerator;
     Player player;
     /// Player's starting top edge in world coordinates, used as the height-score baseline.
     float initialPlayerY;
@@ -23,17 +24,6 @@ export class Game
     float windowHeight;
     /// Upward camera displacement in world-coordinate units; only increases during play.
     float cameraOffset{};
-    /// Position of the latest reachable platform row used as the next generation anchor.
-    float generationAnchorX;
-    float generationAnchorWidth{120.f};
-    float generationAnchorY{540.f};
-    /// Random source used to vary generated platform positions and spacing.
-    std::mt19937 randomEngine;
-
-    /// Adds reachable platforms above the current highest platform.
-    void GeneratePlatforms();
-    /// Removes platforms that have passed below the camera's visible area.
-    void RemovePlatformsBelowCamera();
     /// Restores the initial player, platform, camera, and score state.
     void ResetGame();
 
