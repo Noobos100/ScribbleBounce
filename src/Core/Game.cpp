@@ -1,5 +1,4 @@
 module;
-#include <SFML/Graphics.hpp>
 
 module Game;
 
@@ -83,6 +82,14 @@ void Game::Update(const float deltaTime)
         initialPlayerY - player.GetBounds().position.y
     );
 
+    // à partir d'une certaine hauteur aléatoire, on fait apparaître des plateformes mobiles
+    if (maximumHeight >= std::clamp(maximumHeight, 1500.f, 2000.f))
+    {
+        levelGenerator.EnableMovingPlatforms();
+    }
+    levelGenerator.Update(deltaTime);
+
+    // si le joueur tombe en dehors de la caméra, c'est perdu
     if (player.GetBounds().position.y > windowHeight - cameraOffset)
     {
         isGameOver = true;

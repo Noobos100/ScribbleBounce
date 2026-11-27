@@ -13,6 +13,9 @@ export class LevelGenerator
     float generationAnchorY;
     std::mt19937 randomEngine;
     std::vector<Platform> platforms;
+    bool movingPlatformsEnabled{};
+
+    void StartMovingPlatform(Platform& platform);
 
 public:
     LevelGenerator(float windowWidth, float windowHeight);
@@ -22,6 +25,12 @@ public:
 
     /// Generates reachable platform rows above the camera's generation limit.
     void Generate(float cameraOffset);
+
+    /// Enables horizontal movement for a subset of optional platforms.
+    void EnableMovingPlatforms();
+
+    /// Advances any moving platforms by the elapsed time.
+    void Update(float deltaTime);
 
     /// Removes platforms below the bottom edge of the visible world.
     void RemoveBelowCamera(float cameraOffset);

@@ -1,12 +1,6 @@
-module;
-#include <algorithm>
-#include <cmath>
-#include <cstddef>
-#include <optional>
-#include <random>
-#include <vector>
-
 module LevelGenerator;
+
+import std;
 
 LevelGenerator::LevelGenerator(const float windowWidth, const float windowHeight)
     : windowWidth(windowWidth),
@@ -30,11 +24,28 @@ void LevelGenerator::Reset()
     generationAnchorX = startPlatformX;
     generationAnchorWidth = startPlatformWidth;
     generationAnchorY = startPlatformTop;
+    movingPlatformsEnabled = false;
+}
+
+void LevelGenerator::StartMovingPlatform(Platform& platform)
+{
+    constexpr float movementRange = 80.f;
+    constexpr float movementSpeed = 70.f;
+    const float platformX = platform.GetBounds().position.x;
+    const float platformWidth = platform.GetBounds().size.x;
+    const float minimumX = std::max(0.f, platformX - movementRange);
+    const float maximumX = std::min(
+        windowWidth - platformWidth,
+        platformX + movementRange);
+    std::uniform_int_distribution directionDistribution(0, 1);
+    const float direction = directionDistribution(randomEngine) == 0 ? -1.f : 1.f;
+    platform.StartHorizontalMovement(minimumX, maximumX, direction * movementSpeed);
 }
 
 void LevelGenerator::Generate(const float cameraOffset)
 {
     const float generationLimit = windowHeight * 0.35f - cameraOffset - 120.f;
+    std::bernoulli_distribution shouldMove(0.5);
 
     while (generationAnchorY > generationLimit)
     {
@@ -86,7 +97,10 @@ void LevelGenerator::Generate(const float cameraOffset)
                 maxX);
         }
 
-        platforms.emplace_back(pathPlatformX, platformY, platformWidth, 16.f);
+        platforms.emplace_back(pathPlatformX, platformY, platformWidth, 16.f, true);
+        if (movingPlatformsEnabled && shouldMove(randomEngine))
+            StartMovingPlatform(platforms.back());
+
         generationAnchorX = pathPlatformX;
         generationAnchorWidth = platformWidth;
         generationAnchorY = platformY;
@@ -117,11 +131,24 @@ void LevelGenerator::Generate(const float cameraOffset)
 
             if (extraPlatformX)
             {
-                platforms.emplace_back(*extraPlatformX, platformY, platformWidth, 16.f);
+                platforms.emplace_back(*extraPlatformX, platformY, platformWidth, 16.f, true);
+                if (movingPlatformsEnabled && shouldMove(randomEngine))
+                    StartMovingPlatform(platforms.back());
                 rowPlatformXs.push_back(*extraPlatformX);
             }
         }
     }
+}
+
+void LevelGenerator::EnableMovingPlatforms()
+{
+    movingPlatformsEnabled = true;
+}
+
+void LevelGenerator::Update(const float deltaTime)
+{
+    for (auto& platform : platforms)
+        platform.Update(deltaTime);
 }
 
 void LevelGenerator::RemoveBelowCamera(const float cameraOffset)
