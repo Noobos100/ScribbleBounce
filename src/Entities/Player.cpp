@@ -22,13 +22,10 @@ Player::Player(const float windowWidth, const float startPlatformTop)
       windowWidth(windowWidth),
       verticalVelocity(0.f)
 {
-    shape.setSize({40.f, 50.f});
-    shape.setFillColor(sf::Color::Green);
-
-    shape.setPosition({
-        windowWidth / 2.f - 20.f,
-        startPlatformTop - shape.getSize().y
-    });
+    position = {
+        windowWidth / 2.f - size.x / 2.f,
+        startPlatformTop - size.y
+    };
 }
 
 /**
@@ -46,35 +43,32 @@ void Player::update(const float deltaTime)
         movement += speed;
 
     verticalVelocity += gravity * deltaTime;
-    shape.move({movement * deltaTime, verticalVelocity * deltaTime});
-
-    auto position = shape.getPosition();
+    position.x += movement * deltaTime;
+    position.y += verticalVelocity * deltaTime;
 
     if (position.x < 0.f)
         position.x = 0.f;
 
-    if (position.x + shape.getSize().x > windowWidth)
-        position.x = windowWidth - shape.getSize().x;
-
-    shape.setPosition(position);
+    if (position.x + size.x > windowWidth)
+        position.x = windowWidth - size.x;
 }
 
 /**
  * @param window Fenêtre SFML dans laquelle dessiner le joueur.
  */
-void Player::draw(sf::RenderWindow& window) const
+void Player::Draw(Renderer& renderer) const
 {
-    window.draw(shape);
+    renderer.DrawRectangle(GetBounds(), {0, 255, 0});
 }
 
-sf::Vector2f Player::GetPosition() const
+Vector2 Player::GetPosition() const
 {
-    return shape.getPosition();
+    return position;
 }
 
-sf::FloatRect Player::GetBounds() const
+Rectangle Player::GetBounds() const
 {
-    return shape.getGlobalBounds();
+    return {position, size};
 }
 
 bool Player::IsFalling() const
@@ -88,8 +82,6 @@ bool Player::IsFalling() const
  */
 void Player::LandOn(const float platformTop)
 {
-    auto position = shape.getPosition();
-    position.y = platformTop - shape.getSize().y;
-    shape.setPosition(position);
+    position.y = platformTop - size.y;
     verticalVelocity = -jumpSpeed;
 }

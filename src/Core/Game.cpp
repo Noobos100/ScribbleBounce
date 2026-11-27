@@ -12,18 +12,12 @@ Game::Game(const float windowWidth, const float windowHeight)
 :
       platforms{{windowWidth / 2.f - 60.f, 540.f, 120.f, 16.f}},
       player(windowWidth, 540.f),
-      heightText(heightFont),
       initialPlayerY(player.GetBounds().position.y),
       windowWidth(windowWidth),
       windowHeight(windowHeight),
       generationAnchorX(windowWidth / 2.f - 60.f),
       randomEngine(std::random_device{}())
 {
-    if (!heightFont.openFromFile("C:/Windows/Fonts/arial.ttf"))
-        throw std::runtime_error("Unable to load the Windows Arial font.");
-
-    heightText.setCharacterSize(24);
-    heightText.setFillColor(sf::Color::Black);
     ResetGame();
 }
 
@@ -243,52 +237,36 @@ void Game::Restart()
 }
 
 /**
- * @copydoc Game::Draw(sf::RenderWindow&) const
- * @details The camera offset is applied to a copy of the window's current view, which is
- *          restored after drawing so the camera change does not affect later rendering.
+ * @copydoc Game::Draw(Renderer&) const
  */
-void Game::Draw(sf::RenderWindow& window) const
+void Game::Draw(Renderer& renderer) const
 {
-    const auto originalView = window.getView();
-    auto cameraView = originalView;
-    auto center = cameraView.getCenter();
-    center.y -= cameraOffset;
-    cameraView.setCenter(center);
-    window.setView(cameraView);
+    renderer.SetWorldCameraOffset(cameraOffset);
 
     for (const auto& platform : platforms)
-        platform.draw(window);
-    player.draw(window);
+        platform.Draw(renderer);
+    player.Draw(renderer);
 
-    window.setView(window.getDefaultView());
-    auto scoreText = heightText;
-    scoreText.setString(
-        "Score : " + std::to_string(static_cast<int>(maximumHeight))
-    );
-    const auto textBounds = scoreText.getLocalBounds();
-    const auto windowSize = window.getSize();
-    scoreText.setPosition({
-        static_cast<float>(windowSize.x) - textBounds.position.x - textBounds.size.x - 16.f,
-        16.f - textBounds.position.y
-    });
-    window.draw(scoreText);
+    renderer.SetWorldCameraOffset(0.f);
+    const auto scoreText = "Score : " + std::to_string(static_cast<int>(maximumHeight));
+    const auto [width, height] = renderer.MeasureText(scoreText, 24);
+    renderer.DrawText(
+        scoreText,
+        {windowWidth - width - 16.f, 16.f},
+        24,
+        {0, 0, 0});
 
     if (isGameOver)
     {
-        auto gameOverText = sf::Text(
-            heightFont,
+        const auto gameOverText =
             "Game Over\nFinal Score: " +
-                std::to_string(static_cast<int>(maximumHeight)) +
-                "\nPress R to Restart");
-        gameOverText.setCharacterSize(32);
-        gameOverText.setFillColor(sf::Color::Black);
-        const auto bounds = gameOverText.getLocalBounds();
-        gameOverText.setPosition({
-            (static_cast<float>(windowSize.x) - bounds.size.x) / 2.f - bounds.position.x,
-            (static_cast<float>(windowSize.y) - bounds.size.y) / 2.f - bounds.position.y
-        });
-        window.draw(gameOverText);
+            std::to_string(static_cast<int>(maximumHeight)) +
+            "\nPress R to Restart";
+        const auto [width, height] = renderer.MeasureText(gameOverText, 32);
+        renderer.DrawText(
+            gameOverText,
+            {(windowWidth - width) / 2.f, (windowHeight - height) / 2.f},
+            32,
+            {0, 0, 0});
     }
-
-    window.setView(originalView);
 }

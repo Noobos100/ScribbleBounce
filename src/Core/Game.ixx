@@ -1,9 +1,8 @@
 module;
-#include <SFML/Graphics.hpp>
-
 export module Game;
 
 import std;
+import Renderer;
 import Platform;
 import Player;
 
@@ -12,8 +11,6 @@ export class Game
 {
     std::vector<Platform> platforms;
     Player player;
-    sf::Font heightFont;
-    sf::Text heightText;
     /// Player's starting top edge in world coordinates, used as the height-score baseline.
     float initialPlayerY;
     /// Greatest upward distance reached from the starting position, in world units.
@@ -62,7 +59,6 @@ public:
     /// Restarts the game if it has ended.
     void Restart();
 
-    /// Draws the game through the camera view, with the score HUD and game-over display.
-    /// @param window Render window whose view is temporarily adjusted for drawing.
-    void Draw(sf::RenderWindow& window) const;
+    /// Draws the game and its screen-space UI through the renderer abstraction.
+    void Draw(Renderer& renderer) const;
 };

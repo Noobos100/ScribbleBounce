@@ -1,10 +1,12 @@
 module;
-#include <SFML/Graphics.hpp>
 export module Player;
+
+import Renderer;
 
 export class Player
 {
-    sf::RectangleShape shape;
+    Vector2 position;
+    Vector2 size{40.f, 50.f};
     float speed;
     float windowWidth;
     float verticalVelocity;
@@ -13,9 +15,9 @@ export class Player
         Player(float windowWidth, float startPlatformTop);
 
         void update(float deltaTime);
-        void draw(sf::RenderWindow& window) const;
-        sf::Vector2f GetPosition() const;
-        sf::FloatRect GetBounds() const;
+        void Draw(Renderer& renderer) const;
+        Vector2 GetPosition() const;
+        Rectangle GetBounds() const;
         bool IsFalling() const;
         void LandOn(float platformTop);
 };

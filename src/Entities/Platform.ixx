@@ -1,15 +1,15 @@
 module;
-#include <SFML/Graphics.hpp>
-
 export module Platform;
+
+import Renderer;
 
 export class Platform
 {
-    sf::RectangleShape shape;
+    Rectangle bounds;
 
 public:
     Platform(float x, float y, float width, float height);
 
-    void draw(sf::RenderWindow& window) const;
-    sf::FloatRect GetBounds() const;
+    void Draw(Renderer& renderer) const;
+    Rectangle GetBounds() const;
 };

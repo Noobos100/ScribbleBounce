@@ -3,6 +3,7 @@
 #include <SFML/Window/Keyboard.hpp>
 import std;
 import Game;
+import SfmlRenderer;
 
 int main()
 {
@@ -16,6 +17,7 @@ int main()
     );
 
     window.setFramerateLimit(60);
+    SfmlRenderer renderer(window);
     Game game(static_cast<float>(width), static_cast<float>(height));
 
     sf::Clock clock;
@@ -37,9 +39,9 @@ int main()
         game.Update(deltaTime);
 
         // Affichage
-        window.clear(sf::Color(135, 206, 235));
-        game.Draw(window);
-        window.display();
+        renderer.Clear({135, 206, 235});
+        game.Draw(renderer);
+        renderer.Display();
     }
 
     return 0;

@@ -4,18 +4,16 @@ module;
 module Platform;
 
 Platform::Platform(const float x, const float y, const float width, const float height)
+    : bounds{{x, y}, {width, height}}
 {
-    shape.setSize({width, height});
-    shape.setPosition({x, y});
-    shape.setFillColor(sf::Color(80, 160, 80));
 }
 
-void Platform::draw(sf::RenderWindow& window) const
+void Platform::Draw(Renderer& renderer) const
 {
-    window.draw(shape);
+    renderer.DrawRectangle(bounds, {80, 160, 80});
 }
 
-sf::FloatRect Platform::GetBounds() const
+Rectangle Platform::GetBounds() const
 {
-    return shape.getGlobalBounds();
+    return bounds;
 }
