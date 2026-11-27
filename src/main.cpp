@@ -30,9 +30,13 @@ int main()
             if (event->is<sf::Event::Closed>())
                 window.close();
 
-            if (const auto* keyPressed = event->getIf<sf::Event::KeyPressed>();
-                keyPressed && keyPressed->code == sf::Keyboard::Key::R)
-                game.Restart();
+            if (const auto* keyPressed = event->getIf<sf::Event::KeyPressed>())
+            {
+                if (keyPressed->code == sf::Keyboard::Key::R)
+                    game.Restart();
+                else if (keyPressed->code == sf::Keyboard::Key::C)
+                    game.Continue();
+            }
         }
 
         const float deltaTime = clock.restart().asSeconds();

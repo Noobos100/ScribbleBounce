@@ -85,3 +85,12 @@ void Player::LandOn(const float platformTop)
     position.y = platformTop - size.y;
     verticalVelocity = -jumpSpeed;
 }
+
+void Player::RespawnOnPlatform(const float platformCenterX, const float platformTop)
+{
+    position = {
+        platformCenterX - size.x / 2.f,
+        platformTop - size.y
+    };
+    verticalVelocity = -jumpSpeed;
+}

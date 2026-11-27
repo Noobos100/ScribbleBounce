@@ -20,6 +20,7 @@ public:
     void Draw(Renderer& renderer) const;
     Rectangle GetBounds() const;
     bool IsHorizontalMovementEligible() const;
+    bool IsMoving() const;
     void AddDoor();
     void StartHorizontalMovement(float minimumX, float maximumX, float speed);
     void Update(float deltaTime);

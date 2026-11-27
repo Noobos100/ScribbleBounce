@@ -32,6 +32,11 @@ bool Platform::IsHorizontalMovementEligible() const
     return horizontalMovementEligible;
 }
 
+bool Platform::IsMoving() const
+{
+    return horizontalVelocity != 0.f;
+}
+
 void Platform::AddDoor()
 {
     constexpr float doorRadius = 12.f;

@@ -20,4 +20,5 @@ export class Player
         Rectangle GetBounds() const;
         bool IsFalling() const;
         void LandOn(float platformTop);
+        void RespawnOnPlatform(float platformCenterX, float platformTop);
 };

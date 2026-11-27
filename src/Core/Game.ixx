@@ -12,10 +12,16 @@ export class Game
 {
     LevelGenerator levelGenerator;
     Player player;
-    /// Player's starting top edge in world coordinates, used as the height-score baseline.
-    float initialPlayerY;
+    /// Player's top edge when the current scoring run segment began.
+    float runStartPlayerY;
+    /// Score already accumulated before the current scoring run segment.
+    float scoreAtRunStart{};
+    /// Greatest upward distance reached within the current scoring run segment.
+    float maximumRiseThisRun{};
     /// Greatest upward distance reached from the starting position, in world units.
     float maximumHeight{};
+    /// Number of continues available after falling.
+    unsigned int retryCount{};
     /// True after the player falls below the visible world area.
     bool isGameOver{};
     /// Window width in world units, used to keep generated platforms on screen.
@@ -24,7 +30,7 @@ export class Game
     float windowHeight;
     /// Upward camera displacement in world-coordinate units; only increases during play.
     float cameraOffset{};
-    /// Restores the initial player, platform, camera, and score state.
+    /// Resets the player, platforms, camera, and score for a new run.
     void ResetGame();
 
 public:
@@ -46,8 +52,14 @@ public:
     /// @param deltaTime Elapsed time in seconds since the previous update.
     void Update(float deltaTime);
 
-    /// Restarts the game if it has ended.
+    /// Starts a new run with a reset score after game over.
     void Restart();
+
+    /// Continues from the current platforms while preserving the score, if a retry is available.
+    void Continue();
+
+    /// Adds one available continue.
+    void GrantRetry();
 
     /// Draws the game and its screen-space UI through the renderer abstraction.
     void Draw(Renderer& renderer) const;

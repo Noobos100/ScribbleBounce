@@ -11,7 +11,7 @@ Game::Game(const float windowWidth, const float windowHeight)
 :
       levelGenerator(windowWidth, windowHeight),
       player(windowWidth, 540.f),
-      initialPlayerY(player.GetBounds().position.y),
+      runStartPlayerY(player.GetBounds().position.y),
       windowWidth(windowWidth),
       windowHeight(windowHeight)
 {
@@ -27,7 +27,9 @@ void Game::ResetGame()
 
     levelGenerator.Reset();
     player = Player(windowWidth, startPlatformTop);
-    initialPlayerY = player.GetBounds().position.y;
+    runStartPlayerY = player.GetBounds().position.y;
+    scoreAtRunStart = 0.f;
+    maximumRiseThisRun = 0.f;
     maximumHeight = 0.f;
     cameraOffset = 0.f;
     isGameOver = false;
@@ -77,10 +79,10 @@ void Game::Update(const float deltaTime)
     if (const float desiredOffset = windowHeight * 0.35f - player.GetBounds().position.y; desiredOffset > cameraOffset)
         cameraOffset = desiredOffset;
 
-    maximumHeight = std::max(
-        maximumHeight,
-        initialPlayerY - player.GetBounds().position.y
-    );
+    maximumRiseThisRun = std::max(
+        maximumRiseThisRun,
+        runStartPlayerY - player.GetBounds().position.y);
+    maximumHeight = scoreAtRunStart + maximumRiseThisRun;
 
     // à partir d'une certaine hauteur aléatoire, on fait apparaître des plateformes mobiles
     if (maximumHeight >= std::clamp(maximumHeight, 1500.f, 2000.f))
@@ -110,6 +112,57 @@ void Game::Restart()
 }
 
 /**
+ * @copydoc Game::Continue()
+ */
+void Game::Continue()
+{
+    if (isGameOver && retryCount > 0)
+    {
+        const Platform* lowestStationaryPlatform = nullptr;
+        const Platform* lowestPlatform = nullptr;
+        for (const auto& platform : levelGenerator.GetPlatforms())
+        {
+            if (lowestPlatform == nullptr ||
+                platform.GetBounds().position.y > lowestPlatform->GetBounds().position.y)
+            {
+                lowestPlatform = &platform;
+            }
+
+            if (!platform.IsMoving() &&
+                (lowestStationaryPlatform == nullptr ||
+                 platform.GetBounds().position.y >
+                     lowestStationaryPlatform->GetBounds().position.y))
+            {
+                lowestStationaryPlatform = &platform;
+            }
+        }
+
+        const Platform* respawnPlatform =
+            lowestStationaryPlatform != nullptr ? lowestStationaryPlatform : lowestPlatform;
+        if (respawnPlatform == nullptr)
+            return;
+
+        const auto platformBounds = respawnPlatform->GetBounds();
+        --retryCount;
+        player.RespawnOnPlatform(
+            platformBounds.position.x + platformBounds.size.x / 2.f,
+            platformBounds.position.y);
+        runStartPlayerY = player.GetBounds().position.y;
+        scoreAtRunStart = maximumHeight;
+        maximumRiseThisRun = 0.f;
+        isGameOver = false;
+    }
+}
+
+/**
+ * @copydoc Game::GrantRetry()
+ */
+void Game::GrantRetry()
+{
+    ++retryCount;
+}
+
+/**
  * @copydoc Game::Draw(Renderer&) const
  */
 void Game::Draw(Renderer& renderer) const
@@ -122,23 +175,28 @@ void Game::Draw(Renderer& renderer) const
 
     renderer.SetWorldCameraOffset(0.f);
     const auto scoreText = "Score : " + std::to_string(static_cast<int>(maximumHeight));
-    const auto [width, height] = renderer.MeasureText(scoreText, 24);
+    const auto [scoreWidth, scoreHeight] = renderer.MeasureText(scoreText, 24);
     renderer.DrawText(
         scoreText,
-        {windowWidth - width - 16.f, 16.f},
+        {windowWidth - scoreWidth - 16.f, 16.f},
         24,
         {0, 0, 0});
+
+    const auto retryText = "Retry: " + std::to_string(retryCount);
+    renderer.DrawText(retryText, {16.f, 16.f}, 24, {0, 0, 0});
 
     if (isGameOver)
     {
         const auto gameOverText =
             "Game Over\nFinal Score: " +
             std::to_string(static_cast<int>(maximumHeight)) +
-            "\nPress R to Restart";
-        const auto [width, height] = renderer.MeasureText(gameOverText, 32);
+            (retryCount > 0
+                ? "\nPress C to Continue\nPress R to Restart"
+                : "\nPress R to Restart");
+        const auto [gameOverWidth, gameOverHeight] = renderer.MeasureText(gameOverText, 32);
         renderer.DrawText(
             gameOverText,
-            {(windowWidth - width) / 2.f, (windowHeight - height) / 2.f},
+            {(windowWidth - gameOverWidth) / 2.f, (windowHeight - gameOverHeight) / 2.f},
             32,
             {0, 0, 0});
     }
