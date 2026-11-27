@@ -27,6 +27,21 @@ void LevelGenerator::Reset()
     movingPlatformsEnabled = false;
 }
 
+bool LevelGenerator::RemoveTouchedDoor(const Rectangle playerBounds)
+{
+    const auto entrancePlatform = std::ranges::find_if(
+        platforms,
+        [playerBounds](const Platform& platform)
+        {
+            return platform.TouchesDoor(playerBounds);
+        });
+    if (entrancePlatform == platforms.end())
+        return false;
+
+    entrancePlatform->RemoveDoor();
+    return true;
+}
+
 void LevelGenerator::StartMovingPlatform(Platform& platform)
 {
     constexpr float movementRange = 80.f;
@@ -100,6 +115,7 @@ void LevelGenerator::Generate(const float cameraOffset, const float currentHeigh
         platforms.emplace_back(pathPlatformX, platformY, platformWidth, 16.f, true);
         if (movingPlatformsEnabled && shouldMove(randomEngine))
             StartMovingPlatform(platforms.back());
+        std::vector rowPlatformIndices{platforms.size() - 1};
 
         generationAnchorX = pathPlatformX;
         generationAnchorWidth = platformWidth;
@@ -135,20 +151,31 @@ void LevelGenerator::Generate(const float cameraOffset, const float currentHeigh
                 if (movingPlatformsEnabled && shouldMove(randomEngine))
                     StartMovingPlatform(platforms.back());
                 rowPlatformXs.push_back(*extraPlatformX);
+                rowPlatformIndices.push_back(platforms.size() - 1);
+            }
+        }
 
-                // à partir d'une certaine hauteur, 1 chance sur 10 (0,1) que des portes
-                // vers des niveaux bonus peuvent apparaître sur les plateformes secondaires
-                if (currentHeight > 5000.f)
-                {
-                    std::bernoulli_distribution shouldSpawnDoor(0.1);
-                    if (shouldSpawnDoor(randomEngine))
+        if (extraPlatformCount > 0 && currentHeight > 1500.f)
+        {
+            std::bernoulli_distribution shouldSpawnDoor(0.1);
+            if (shouldSpawnDoor(randomEngine))
+            {
+                std::vector<std::size_t> movingPlatformIndices;
+                std::ranges::copy_if(
+                    rowPlatformIndices,
+                    std::back_inserter(movingPlatformIndices),
+                    [this](const std::size_t platformIndex)
                     {
-                        std::uniform_int_distribution platformDistribution(
-                            platforms.size() - 2,
-                            platforms.size() - 1
-                        );
-                        platforms[platformDistribution(randomEngine)].AddDoor();
-                    }
+                        return platforms[platformIndex].IsMoving();
+                    });
+
+                if (!movingPlatformIndices.empty())
+                {
+                    std::uniform_int_distribution<std::size_t> platformDistribution(
+                        0,
+                        movingPlatformIndices.size() - 1);
+                    platforms[movingPlatformIndices[platformDistribution(randomEngine)]]
+                        .AddDoor();
                 }
             }
         }

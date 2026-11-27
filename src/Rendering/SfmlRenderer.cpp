@@ -20,7 +20,7 @@ void SfmlRenderer::DrawRectangle(const Rectangle rectangle, const Color color)
     sf::RectangleShape shape;
     shape.setSize({rectangle.size.x, rectangle.size.y});
     shape.setPosition({
-        rectangle.position.x,
+        rectangle.position.x - horizontalCameraOffset,
         rectangle.position.y + worldCameraOffset
     });
     shape.setFillColor({color.red, color.green, color.blue, color.alpha});
@@ -35,7 +35,7 @@ void SfmlRenderer::DrawCircle(
     sf::CircleShape shape(radius);
     shape.setOrigin({radius, radius});
     shape.setPosition({
-        center.x,
+        center.x - horizontalCameraOffset,
         center.y + worldCameraOffset
     });
     shape.setFillColor({color.red, color.green, color.blue, color.alpha});
@@ -75,9 +75,12 @@ TextSize SfmlRenderer::MeasureText(
     return {bounds.size.x, bounds.size.y};
 }
 
-void SfmlRenderer::SetWorldCameraOffset(const float offset)
+void SfmlRenderer::SetWorldCameraOffset(
+    const float verticalOffset,
+    const float horizontalOffset)
 {
-    worldCameraOffset = offset;
+    worldCameraOffset = verticalOffset;
+    horizontalCameraOffset = horizontalOffset;
 }
 
 void SfmlRenderer::Display()

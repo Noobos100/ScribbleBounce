@@ -43,7 +43,7 @@ int main()
         game.Update(deltaTime);
 
         // Affichage
-        renderer.Clear({135, 206, 235});
+        renderer.Clear(game.GetBackgroundColor());
         game.Draw(renderer);
         renderer.Display();
     }

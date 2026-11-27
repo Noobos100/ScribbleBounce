@@ -48,6 +48,16 @@ void Platform::AddDoor()
         doorRadius);
 }
 
+void Platform::RemoveDoor()
+{
+    door.reset();
+}
+
+bool Platform::TouchesDoor(const Rectangle rectangle) const
+{
+    return door && door->Intersects(rectangle);
+}
+
 void Platform::StartHorizontalMovement(
     const float minimumX,
     const float maximumX,

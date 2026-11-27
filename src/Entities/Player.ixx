@@ -8,7 +8,8 @@ export class Player
     Vector2 position;
     Vector2 size{40.f, 50.f};
     float speed;
-    float windowWidth;
+    float minimumX;
+    float maximumX;
     float verticalVelocity;
 
     public:
@@ -18,6 +19,7 @@ export class Player
         void Draw(Renderer& renderer) const;
         Vector2 GetPosition() const;
         Rectangle GetBounds() const;
+        void SetHorizontalMovementBounds(float minimumX, float maximumX);
         bool IsFalling() const;
         void LandOn(float platformTop);
         void RespawnOnPlatform(float platformCenterX, float platformTop);

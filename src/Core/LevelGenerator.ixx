@@ -2,6 +2,7 @@ export module LevelGenerator;
 
 import std;
 import Platform;
+import Renderer;
 
 /// Generates and maintains the platforms that make up one game level.
 export class LevelGenerator
@@ -22,6 +23,9 @@ public:
 
     /// Restores the starting platform and clears previously generated platforms.
     void Reset();
+
+    /// Removes the door touched by the given player bounds and reports whether one was found.
+    bool RemoveTouchedDoor(Rectangle playerBounds);
 
     /// Generates reachable platform rows above the camera's generation limit.
     void Generate(float cameraOffset, float currentHeight);

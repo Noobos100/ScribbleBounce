@@ -4,6 +4,8 @@ module;
 
 module Player;
 
+import std;
+
 namespace
 {
     // Accélération verticale vers le bas, en unités du monde par seconde carrée.
@@ -19,7 +21,8 @@ namespace
  */
 Player::Player(const float windowWidth, const float startPlatformTop)
     : speed(300.f),
-      windowWidth(windowWidth),
+      minimumX(0.f),
+      maximumX(windowWidth),
       verticalVelocity(0.f)
 {
     position = {
@@ -46,11 +49,11 @@ void Player::update(const float deltaTime)
     position.x += movement * deltaTime;
     position.y += verticalVelocity * deltaTime;
 
-    if (position.x < 0.f)
-        position.x = 0.f;
+    if (position.x < minimumX)
+        position.x = minimumX;
 
-    if (position.x + size.x > windowWidth)
-        position.x = windowWidth - size.x;
+    if (position.x + size.x > maximumX)
+        position.x = maximumX - size.x;
 }
 
 /**
@@ -69,6 +72,15 @@ Vector2 Player::GetPosition() const
 Rectangle Player::GetBounds() const
 {
     return {position, size};
+}
+
+void Player::SetHorizontalMovementBounds(
+    const float minimumX,
+    const float maximumX)
+{
+    this->minimumX = minimumX;
+    this->maximumX = std::max(maximumX, minimumX + size.x);
+    position.x = std::clamp(position.x, minimumX, this->maximumX - size.x);
 }
 
 bool Player::IsFalling() const

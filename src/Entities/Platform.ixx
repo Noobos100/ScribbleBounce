@@ -22,6 +22,8 @@ public:
     bool IsHorizontalMovementEligible() const;
     bool IsMoving() const;
     void AddDoor();
+    void RemoveDoor();
+    bool TouchesDoor(Rectangle rectangle) const;
     void StartHorizontalMovement(float minimumX, float maximumX, float speed);
     void Update(float deltaTime);
 };

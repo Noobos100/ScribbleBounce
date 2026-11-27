@@ -49,7 +49,7 @@ public:
     /// Returns the rendered text's width and height in screen coordinates.
     virtual TextSize MeasureText(std::string_view text, unsigned int characterSize) = 0;
     /// Sets the vertical world-to-screen offset used for world-space rectangles.
-    virtual void SetWorldCameraOffset(float offset) = 0;
+    virtual void SetWorldCameraOffset(float verticalOffset, float horizontalOffset) = 0;
     /// Presents the completed frame.
     virtual void Display() = 0;
 };

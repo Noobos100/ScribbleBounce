@@ -10,6 +10,7 @@ export class SfmlRenderer final : public Renderer
     sf::RenderWindow& window;
     sf::Font font;
     float worldCameraOffset{};
+    float horizontalCameraOffset{};
 
 public:
     explicit SfmlRenderer(sf::RenderWindow& window);
@@ -23,6 +24,6 @@ public:
         unsigned int characterSize,
         Color color) override;
     TextSize MeasureText(std::string_view text, unsigned int characterSize) override;
-    void SetWorldCameraOffset(float offset) override;
+    void SetWorldCameraOffset(float verticalOffset, float horizontalOffset = 0.f) override;
     void Display() override;
 };

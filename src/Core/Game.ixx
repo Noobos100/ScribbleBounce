@@ -6,11 +6,13 @@ import Renderer;
 import Platform;
 import Player;
 import LevelGenerator;
+import BonusLevel;
 
 /// Coordinates gameplay, platform collisions, and the upward-following camera.
 export class Game
 {
     LevelGenerator levelGenerator;
+    BonusLevel bonusLevel;
     Player player;
     /// Player's top edge when the current scoring run segment began.
     float runStartPlayerY;
@@ -30,8 +32,22 @@ export class Game
     float windowHeight;
     /// Upward camera displacement in world-coordinate units; only increases during play.
     float cameraOffset{};
+    /// Rightward camera displacement used only while scrolling through the bonus level.
+    float horizontalCameraOffset{};
+    std::optional<Player> savedNormalPlayer;
+    bool bonusLevelActive{};
+    float bonusAnnouncementElapsed{};
+    /// Prevents immediately re-entering the same door after returning to the normal level.
+    bool mustLeaveDoor{};
     /// Resets the player, platforms, camera, and score for a new run.
     void ResetGame();
+    void LandOnPlatforms(
+        Rectangle previousBounds,
+        Rectangle currentBounds,
+        const std::vector<Platform>& platforms);
+    bool TouchesDoor(Rectangle playerBounds) const;
+    void EnterBonusLevel();
+    void ExitBonusLevel();
 
 public:
     /**
@@ -60,6 +76,9 @@ public:
 
     /// Adds one available continue.
     void GrantRetry();
+
+    /// Returns the background color for the currently active level.
+    Color GetBackgroundColor() const;
 
     /// Draws the game and its screen-space UI through the renderer abstraction.
     void Draw(Renderer& renderer) const;

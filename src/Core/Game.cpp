@@ -10,6 +10,7 @@ module Game;
 Game::Game(const float windowWidth, const float windowHeight)
 :
       levelGenerator(windowWidth, windowHeight),
+      bonusLevel(windowWidth),
       player(windowWidth, 540.f),
       runStartPlayerY(player.GetBounds().position.y),
       windowWidth(windowWidth),
@@ -32,8 +33,78 @@ void Game::ResetGame()
     maximumRiseThisRun = 0.f;
     maximumHeight = 0.f;
     cameraOffset = 0.f;
+    horizontalCameraOffset = 0.f;
+    savedNormalPlayer.reset();
+    bonusLevelActive = false;
+    bonusAnnouncementElapsed = 0.f;
+    mustLeaveDoor = false;
     isGameOver = false;
     levelGenerator.Generate(cameraOffset, maximumHeight);
+}
+
+void Game::LandOnPlatforms(
+    const Rectangle previousBounds,
+    const Rectangle currentBounds,
+    const std::vector<Platform>& platforms)
+{
+    if (!player.IsFalling())
+        return;
+
+    const float previousBottom = previousBounds.position.y + previousBounds.size.y;
+    const float currentBottom = currentBounds.position.y + currentBounds.size.y;
+    for (const auto& platform : platforms)
+    {
+        const auto platformBounds = platform.GetBounds();
+        const float platformRight = platformBounds.position.x + platformBounds.size.x;
+        const float playerRight = currentBounds.position.x + currentBounds.size.x;
+        const bool overlapsHorizontally =
+            currentBounds.position.x < platformRight &&
+            playerRight > platformBounds.position.x;
+        const bool crossesPlatformTop =
+            previousBottom <= platformBounds.position.y &&
+            currentBottom >= platformBounds.position.y;
+
+        if (overlapsHorizontally && crossesPlatformTop)
+        {
+            player.LandOn(platformBounds.position.y);
+            break;
+        }
+    }
+}
+
+bool Game::TouchesDoor(const Rectangle playerBounds) const
+{
+    return std::ranges::any_of(
+        levelGenerator.GetPlatforms(),
+        [playerBounds](const Platform& platform)
+        {
+            return platform.TouchesDoor(playerBounds);
+        });
+}
+
+void Game::EnterBonusLevel()
+{
+    savedNormalPlayer = player;
+    bonusLevel.Start();
+    bonusLevelActive = true;
+    bonusAnnouncementElapsed = 0.f;
+    player.SetHorizontalMovementBounds(0.f, bonusLevel.GetWorldWidth());
+    const auto startPlatform = bonusLevel.GetPlatforms().front().GetBounds();
+    player.RespawnOnPlatform(
+        startPlatform.position.x + startPlatform.size.x / 2.f,
+        startPlatform.position.y);
+    horizontalCameraOffset = 0.f;
+    mustLeaveDoor = false;
+}
+
+void Game::ExitBonusLevel()
+{
+    bonusLevelActive = false;
+    if (savedNormalPlayer)
+        player = std::move(*savedNormalPlayer);
+    savedNormalPlayer.reset();
+    horizontalCameraOffset = 0.f;
+    mustLeaveDoor = true;
 }
 
 /**
@@ -50,31 +121,28 @@ void Game::Update(const float deltaTime)
     player.update(deltaTime);
     const auto currentBounds = player.GetBounds();
 
-    if (player.IsFalling())
+    if (bonusLevelActive)
     {
-        const float previousBottom = previousBounds.position.y + previousBounds.size.y;
-        const float currentBottom = currentBounds.position.y + currentBounds.size.y;
+        bonusAnnouncementElapsed += deltaTime;
+        LandOnPlatforms(previousBounds, currentBounds, bonusLevel.GetPlatforms());
+        bonusLevel.Update(deltaTime);
 
-        // gestion des collisions avec les plateformes
-        for (const auto& platform : levelGenerator.GetPlatforms())
+        if (player.GetBounds().position.y > windowHeight)
         {
-            const auto platformBounds = platform.GetBounds();
-            const float platformRight = platformBounds.position.x + platformBounds.size.x;
-            const float playerRight = currentBounds.position.x + currentBounds.size.x;
-            const bool overlapsHorizontally =
-                currentBounds.position.x < platformRight &&
-                playerRight > platformBounds.position.x;
-            const bool crossesPlatformTop =
-                previousBottom <= platformBounds.position.y &&
-                currentBottom >= platformBounds.position.y;
-
-            if (overlapsHorizontally && crossesPlatformTop)
-            {
-                player.LandOn(platformBounds.position.y);
-                break;
-            }
+            ExitBonusLevel();
+            return;
         }
+
+        horizontalCameraOffset = std::max(
+            horizontalCameraOffset,
+            player.GetBounds().position.x - windowWidth * 0.6f);
+        return;
     }
+
+    LandOnPlatforms(previousBounds, currentBounds, levelGenerator.GetPlatforms());
+
+    if (mustLeaveDoor && !TouchesDoor(player.GetBounds()))
+        mustLeaveDoor = false;
 
     if (const float desiredOffset = windowHeight * 0.35f - player.GetBounds().position.y; desiredOffset > cameraOffset)
         cameraOffset = desiredOffset;
@@ -83,6 +151,12 @@ void Game::Update(const float deltaTime)
         maximumRiseThisRun,
         runStartPlayerY - player.GetBounds().position.y);
     maximumHeight = scoreAtRunStart + maximumRiseThisRun;
+
+    if (!mustLeaveDoor && levelGenerator.RemoveTouchedDoor(player.GetBounds()))
+    {
+        EnterBonusLevel();
+        return;
+    }
 
     // à partir d'une certaine hauteur aléatoire, on fait apparaître des plateformes mobiles
     if (maximumHeight >= std::clamp(maximumHeight, 1500.f, 2000.f))
@@ -162,18 +236,30 @@ void Game::GrantRetry()
     ++retryCount;
 }
 
+Color Game::GetBackgroundColor() const
+{
+    return bonusLevelActive
+        ? Color{170, 75, 75}
+        : Color{135, 206, 235};
+}
+
 /**
  * @copydoc Game::Draw(Renderer&) const
  */
 void Game::Draw(Renderer& renderer) const
 {
-    renderer.SetWorldCameraOffset(cameraOffset);
+    renderer.SetWorldCameraOffset(
+        bonusLevelActive ? 0.f : cameraOffset,
+        horizontalCameraOffset);
 
-    for (const auto& platform : levelGenerator.GetPlatforms())
+    const auto& platforms = bonusLevelActive
+        ? bonusLevel.GetPlatforms()
+        : levelGenerator.GetPlatforms();
+    for (const auto& platform : platforms)
         platform.Draw(renderer);
     player.Draw(renderer);
 
-    renderer.SetWorldCameraOffset(0.f);
+    renderer.SetWorldCameraOffset(0.f, 0.f);
     const auto scoreText = "Score : " + std::to_string(static_cast<int>(maximumHeight));
     const auto [scoreWidth, scoreHeight] = renderer.MeasureText(scoreText, 24);
     renderer.DrawText(
@@ -181,6 +267,22 @@ void Game::Draw(Renderer& renderer) const
         {windowWidth - scoreWidth - 16.f, 16.f},
         24,
         {0, 0, 0});
+
+    constexpr float bonusAnnouncementDuration = 3.f;
+    constexpr float bonusFlashInterval = 0.25f;
+    if (bonusLevelActive && bonusAnnouncementElapsed < bonusAnnouncementDuration &&
+        static_cast<unsigned int>(bonusAnnouncementElapsed / bonusFlashInterval) % 2 == 0)
+    {
+        constexpr std::string_view bonusText = "BONUS";
+        constexpr unsigned int bonusTextSize = 48;
+        const auto [bonusTextWidth, bonusTextHeight] =
+            renderer.MeasureText(bonusText, bonusTextSize);
+        renderer.DrawText(
+            bonusText,
+            {(windowWidth - bonusTextWidth) / 2.f, (windowHeight - bonusTextHeight) / 2.f},
+            bonusTextSize,
+            {255, 230, 80});
+    }
 
     const auto retryText = "Retry: " + std::to_string(retryCount);
     renderer.DrawText(retryText, {16.f, 16.f}, 24, {0, 0, 0});
